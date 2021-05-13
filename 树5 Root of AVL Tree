@@ -1,0 +1,164 @@
+04-树5 Root of AVL Tree (25 分)
+An AVL tree is a self-balancing binary search tree. In an AVL tree, the heights of the two child subtrees of any node differ by at most one;
+if at any time they differ by more than one, rebalancing is done to restore this property. Figures 1-4 illustrate the rotation rules.
+
+F1.jpg
+
+F2.jpg
+
+F3.jpg
+
+F4.jpg
+
+Now given a sequence of insertions, you are supposed to tell the root of the resulting AVL tree.
+Input Specification:
+Each input file contains one test case. For each case, the first line contains a positive integer N (≤20) which is the total number of keys to be inserted.
+Then N distinct integer keys are given in the next line. All the numbers in a line are separated by a space.
+
+Output Specification:
+For each test case, print the root of the resulting AVL tree in one line.
+
+Sample Input 1:
+5
+88 70 61 96 120
+Sample Output 1:
+70
+Sample Input 2:
+7
+88 70 61 96 120 90 65
+Sample Output 2:
+88
+
+
+
+
+
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct TNode *AVLTree;
+typedef int ElementType;
+struct TNode{
+    ElementType Data;
+    AVLTree Left;
+    AVLTree Right;
+    int Height;
+};
+
+AVLTree Insert(AVLTree T,ElementType X);
+int Max(int a,int b);
+int GetHeight(AVLTree T);
+AVLTree SingleLeftRotation ( AVLTree A );
+AVLTree DoubleLeftRightRotation ( AVLTree A );
+AVLTree SingleRightRotation(AVLTree T);
+AVLTree DoubleRightLeftRotation(AVLTree T);
+
+int main()
+{
+    int N,X;
+    AVLTree Tree=NULL;
+    scanf("%d",&N);
+    for(int i=0;i<N;i++)
+    {
+        scanf("%d",&X);
+        Tree = Insert(Tree,X);
+
+    }
+    printf("%d\n",Tree->Data);
+    return 0;
+}
+
+int Max(int a,int b)
+{
+    return a>b?a:b;
+}
+
+int GetHeight(AVLTree T)
+{
+    if(!T) return -1;
+    else return T->Height;
+}
+
+AVLTree Insert(AVLTree T,ElementType X)
+{
+    /*对于输入样例二：88 70 61 96 120 90 65
+    1.读入元素X，若为空树新建根节点，否则，与当前结点比较，
+    若X小于当前结点，递归插入左子树，
+    若大于，递归插入右子树；
+    2.插入成功后，更新该新结点树高；
+    3.从插入时遍历的路线，从新结点一个个往回遍历，判断，是否存在麻烦结点；
+    （麻烦结点即为平衡被破坏的结点，即左右子树高度相差2及以上）
+    4.若存在，則在最先找出的麻烦结点进行调整：
+    （左单旋，左-右双旋，右单旋，右-左双旋）
+    若不存在：跟新树高即可；
+    */
+    if(!T)
+    {
+        T=(AVLTree)malloc(sizeof(struct TNode));
+        T->Data = X;
+        T->Left = T->Right = NULL;
+        T->Height = 0;
+    }else if(X<T->Data){
+    
+        T->Left = Insert(T->Left,X);
+        if(GetHeight(T->Left)-GetHeight(T->Right)==2){
+//            printf("T=%d\n",T->Data);
+            if(X< T->Left->Data)
+                T = SingleLeftRotation(T);
+            else
+                T = DoubleLeftRightRotation(T);
+        }
+
+    }else if(X>T->Data){
+        T->Right = Insert(T->Right,X);
+        if(GetHeight(T->Right)-GetHeight(T->Left)==2){
+//            printf("T=%d\n",T->Data);
+            if(X>T->Right->Data)
+                T = SingleRightRotation(T);
+            else
+                T = DoubleRightLeftRotation(T);
+        }
+    }
+    //更新树高
+    T->Height = Max(GetHeight(T->Left),GetHeight(T->Right))+1;
+    return T;
+}
+
+AVLTree SingleLeftRotation ( AVLTree A )
+{ /* 注意：A必须有一个左子结点B */
+  /* 将A与B做左单旋，更新A与B的高度，返回新的根结点B */
+
+    AVLTree B = A->Left;
+    A->Left = B->Right;
+    B->Right = A;
+    A->Height = Max( GetHeight(A->Left), GetHeight(A->Right) ) + 1;
+    B->Height = Max( GetHeight(B->Left), A->Height ) + 1;
+
+    return B;
+}
+
+AVLTree DoubleLeftRightRotation ( AVLTree A )
+{ /* 注意：A必须有一个左子结点B，且B必须有一个右子结点C */
+  /* 将A、B与C做两次单旋，返回新的根结点C */
+
+    /* 将B与C做右单旋，C被返回 */
+    A->Left = SingleRightRotation(A->Left);
+    /* 将A与C做左单旋，C被返回 */
+    return SingleLeftRotation(A);
+}
+
+AVLTree SingleRightRotation(AVLTree A)
+{
+    AVLTree B = A->Right;
+    A->Right = B->Left;
+    B->Left = A;
+    A->Height = Max( GetHeight(A->Left), GetHeight(A->Right) ) + 1;
+    B->Height = Max( GetHeight(B->Right), A->Height ) + 1;
+    return B;
+}
+
+AVLTree DoubleRightLeftRotation(AVLTree A)
+{
+    A->Right = SingleLeftRotation(A->Right);
+    return SingleRightRotation(A);
+}
